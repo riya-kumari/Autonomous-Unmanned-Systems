@@ -10,6 +10,10 @@ cap = cv2.VideoCapture(input_video_path)
 if (cap.isOpened() == False):
     print("Error in opening BarrelVideo.mp4")
 
+# Indicate our color boundaries for detection (orange & white)
+desired_colors = ([255,178,102],[255,80,0]), 
+                  ([246,246,215],[255,255,255])
+
 
 while (cap.isOpened()):
     # Capture frame-by-frame
