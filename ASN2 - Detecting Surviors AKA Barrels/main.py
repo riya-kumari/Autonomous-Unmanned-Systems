@@ -3,6 +3,8 @@ import cv2
 # Opens and reads the video, displaying it in another window
 # TODO: Detect the barrels and draw the rectangles around the barrels
 
+#Our dimensions are 640X480
+
 
 input_video_path = './BarrelVideo.mp4'
 cap = cv2.VideoCapture(input_video_path)
