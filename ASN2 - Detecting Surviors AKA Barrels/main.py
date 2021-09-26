@@ -1,9 +1,12 @@
 import cv2
 import numpy as np
+
+
 # run it by typing 'python3 main.py' in terminal/command-prompt
 # Opens and reads the video, displaying it in another window
 # TODO: Detect the barrels and draw the rectangles around the barrels
-
+import random as rng
+# from colorlabeler import ColorLabeler
 
 input_video_path = './BarrelVideo.mp4'
 cap = cv2.VideoCapture(input_video_path)
@@ -20,45 +23,49 @@ def empty(a):
     pass
 
 
-cv2.namedWindow("HSV")
-cv2.resizeWindow("HSV", 640, 240)
-cv2.createTrackbar("HUE Min", "HSV", 0, 179, empty)
-cv2.createTrackbar("HUE Max", "HSV", 179, 179, empty)
-cv2.createTrackbar("SAT Min", "HSV", 0, 255, empty)
-cv2.createTrackbar("SAT Max", "HSV", 255, 255, empty)
-cv2.createTrackbar("VALUE Min", "HSV", 0, 255, empty)
-cv2.createTrackbar("VALUE Max", "HSV", 255, 255, empty)
-
-
 while (cap.isOpened()):
     # Capture frame-by-frame
-    vid, frame = cap.read()
-    imgHsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    h_min = cv2.getTrackbarPos("HUE Min", "HSV")
-    h_max = cv2.getTrackbarPos("HUE Max", "HSV")
-    s_min = cv2.getTrackbarPos("SAT Min", "HSV")
-    s_max = cv2.getTrackbarPos("SAT Max", "HSV")
-    v_min = cv2.getTrackbarPos("VALUE Min", "HSV")
-    v_max = cv2.getTrackbarPos("VALUE Max", "HSV")
-    print(h_min)
+    success, frame = cap.read()
 
-    lower = np.array([h_min, s_min, v_min])
-    upper = np.array([h_max, s_max, v_max])
-    mask = cv2.inRange(imgHsv, lower, upper)
-    result = cv2.bitwise_and(frame, frame, mask=mask)
+    if success == True:
+        imgBlur = cv2.GaussianBlur(frame, (7, 7), 1)
+        imgGray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
-    hStack = np.hstack([frame, mask, result])
+        imgGrayBlur = cv2.blur(imgGray, (3, 3))
+        imgGrayBlur = cv2.bilateralFilter(imgGray, 5, 175, 175)
+        imgHsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    cv2.imshow('HSV Color Space', imgHsv)
-    cv2.imshow('Mask', mask)
-    cv2.imshow('Result', result)
-    if vid == True:
-        # Display the resulting frame
-        cv2.imshow('BarrelVideo-original', frame)
+        imgCanny = cv2.Canny(imgGrayBlur, 50, 50)
+        kernel = np.ones((5, 5))
+        # img_dilate = cv2.dilate(imgCanny, kernel, iterations=1)
+
+        # Find contours
+        contours, hierarchy = cv2.findContours(
+            imgCanny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # contours = imutils.grab_contours(contours)
+        contours = sorted(contours, key=cv2.contourArea, reverse=True)
+
+        for i in range(3):
+            # contours:
+            cnt = contours[i]
+            area = cv2.contourArea(cnt)
+            if area > 500:
+                cv2.drawContours(frame, cnt, -1, (0, 0, 255), 7)
+                perimeter = cv2.arcLength(cnt, True)
+                approx = cv2.approxPolyDP(cnt, 0.02 * perimeter, True)
+                print(len(approx))
+
+                x, y, w, h = cv2.boundingRect(approx)
+                cv2.rectangle(frame, (x, y),
+                              (x + w, y + h), (0, 255, 0), 5)
+
+        cv2.imshow('imgCanny', imgCanny)
+        cv2.imshow('Barrel-video', frame)
+
+        # Draw contours
 
         # Press Q on keyboard to  exit
-        if cv2.waitKey(1000) & 0xFF == ord('q'):
+        if cv2.waitKey(200) & 0xFF == ord('q'):
             break
 
     # Breaks the loop
