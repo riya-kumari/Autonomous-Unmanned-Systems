@@ -27,8 +27,8 @@ while (cap.isOpened()):
         ORANGE_MIN = np.array([5, 50, 50], np.uint8)
         ORANGE_MAX = np.array([15, 255, 255], np.uint8)
 
-        WHITE_MAX = np.array([0, 0, 50])
-        WHITE_MIN = np.array([0, 0, 100])
+        WHITE_MAX = np.array([76,75,77])
+        WHITE_MIN = np.array([174,177,178])
 
         maskOrange = cv2.inRange(imgHsv, ORANGE_MIN, ORANGE_MAX)
         result = cv2.bitwise_and(frame, frame, mask=maskOrange)
