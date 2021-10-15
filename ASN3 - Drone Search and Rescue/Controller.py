@@ -4,10 +4,9 @@
 import bpy
 import sys
 
-# Add Python 3.7 Environment Variables (Defined for LinImathux)
+
 sys.path.append('/usr/local/bin/python3.9')
 sys.path.append('/usr/local/include')
-#sys.path.append('/usr/local/Cellar/')
 sys.path.append('/usr/local/lib')
 sys.path.append('/usr/local/bin')
 sys.path.append('/usr/local/lib/python3.9/site-packages')
@@ -77,37 +76,37 @@ def VisionAndPlanner(GoalLocation, Camera):
     path_dir = bpy.data.scenes["Scene"].node_tree.nodes["File Output"].base_path
     print(os.path.join(path_dir, 'Frames', 'Frame%04d'%(bpy.data.scenes[0].frame_current)))
     I = cv2.imread(os.path.join(path_dir, 'Frames', 'Frame%04d.png'%(bpy.data.scenes[0].frame_current)))
-#    D = Exr2Depth(os.path.join(path_dir, 'Depth', 'Depth%04d.exr'%(bpy.data.scenes[0].frame_current)))
-##    
+    
+    # The depth maps are already being generated for us. Over here we are reading the values in from the depth maps and storing them in a numpy.ndArray    
     D = cv2.imread(os.path.join(path_dir, 'Depth', 'Depth%04d.exr'%(bpy.data.scenes[0].frame_current)),  cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
-#    print(D)
-    # Converting depth exr to numpy array for further processing
-#    channelData = dict()
-#    for c in header['channels']:
-#        C = exrfile.channel(c, Imath.PixelType(Imath.PixelType.FLOAT))
-#        C = np.fromstring(C, dtype=np.float32)
-#        C = np.reshape(C, isize)
-#        
-#        channelData[c] = C
-#        print(channelData[c])
-#    # You can visualize depth and image as follows
-#    numpy.set_printoptions(threshold=sys.maxsize)
-#    np.arange(100).reshape(25,4).tolist
+    #height : 240
+    #width: 320
+    leftmost_val = D[120,80][0]
+    middle_val = D[120,160][0]
+    rightmost_val = D[120,240][0]
+    
+    xDistance = GoalLocation[0] - Camera.location[0]
+    yDistance = GoalLocation[1] - Camera.location[1] - 5
+    angle_theta = -1*math.atan2(yDistance, xDistance)/5
+    angle_theta = math.degrees(angle_theta)
 
-    D = (D <= 20. ) * D
-    D = np.array(D.tolist())
-    print(D.length)
+#   Making the assumption that bot moves in the y direction at a speed of 3.1 units per iteration
+    movement_toward_goal = (math.tan(angle_theta)/3.1)
+    
+    obstacle_index = 0.2
+    walls = 0.7
+    
+    if leftmost_val < obstacle_index : 
+        return math.copysign(0.8, 1)
+    elif rightmost_val < obstacle_index: 
+        return math.copysign(0.8, -1)
+    else : 
+        return movement_toward_goal
+
 #    print(D.to.length)
 #    cv2.imshow('Depth', D)
 #    cv2.imshow('Image', I)
-    cv2.waitKey(0)
-    xDistance = GoalLocation[0] - Camera.location[0]
-    yDistance = GoalLocation[1] - Camera.location[1]
-    angle_theta = -1*math.atan2(yDistance, xDistance)
-    newX = (Math.cos(angle_theta)*0.05)
-    
-    VelX = math.copysign(0.5, 0.5-random.uniform(0, 1))
-    return newX
+#    cv2.waitKey(0);
 
 def Controller(TrafficCylinder, Camera):
     GoalReached = False # We are far from the goal when we start
@@ -134,7 +133,7 @@ def Controller(TrafficCylinder, Camera):
         
         # DO NOT MODIFY BELOW THIS!
         DistToGoal = math.sqrt((GoalLocation[0]-Camera.location[0])**2 + (GoalLocation[1]-Camera.location[1])**2 + (GoalLocation[2]-Camera.location[2])**2)
-        if(DistToGoal <= 2.):
+        if(DistToGoal <= 5.):
             GoalReached = True
             print("Goal reached")
         if(Camera.location[0]<=-7.43413 or Camera.location[0]>=14.1931 or Camera.location[1]<=-50. or Camera.location[1]>=34.4089 or Camera.location[2]<=0. or Camera.location[2]>=10.):
@@ -165,6 +164,3 @@ def main():
 if __name__=="__main__":
     main()
     
-    
-    
-     
